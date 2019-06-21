@@ -15,7 +15,7 @@ object SortImportsConfig {
   implicit val encoder = generic.deriveEncoder[SortImportsConfig]
 }
 
-class Sortimports(config: SortImportsConfig) extends SemanticRule("Sortimports") {
+class SortImports(config: SortImportsConfig) extends SemanticRule("SortImports") {
   def this() = this(SortImportsConfig.default)
 
   override def description: String =
@@ -25,15 +25,13 @@ class Sortimports(config: SortImportsConfig) extends SemanticRule("Sortimports")
   override def withConfiguration(config: Configuration): Configured[Rule] =
       config.conf
         .getOrElse("SortImports")(this.config)
-        .map(new Sortimports(_))
+        .map(new SortImports(_))
 
   override def fix(implicit doc: SemanticDocument): Patch = {
     val a: List[Importer] = doc.tree.collect {
         case i: Importer => Some(i)
         case _ => None
       }.filter(_.isDefined).map(_.get)
-
-    println("Imports: " + a)
 
     val removal = a.map { importers =>
         importers.importees.collect {
@@ -46,16 +44,23 @@ class Sortimports(config: SortImportsConfig) extends SemanticRule("Sortimports")
       .sorted
       .groupBy(s => config.blocks.find(p => s.startsWith(p)))
 
-    println("config: " + config.blocks)
-      println("grouped:" + importsGrouped)
-
     val imports: List[String] = config.blocks.flatMap(b => importsGrouped.get(Some(b))
                                                         .fold(List.empty[String])(
-                                                          (l: List[String]) => l ++ List[String]("\n\n")
+                                                          (l: List[String]) => l ++ List("")
                                                         )) ++ importsGrouped.get(None).fold(List.empty[String])(identity)
 
-    val add = imports.map(s => Patch.addLeft(a.head.parent.get, s"\nimport ${s}"))
-      .asPatch
+    val importsWithKeyword = imports.map {
+        case "" => "\n"
+        case x => s"\nimport ${x}"
+      }.dropRight {
+
+        imports.lastOption match {
+          case Some("") => 1
+          case _ => 0
+        }
+      }
+
+    val add = importsWithKeyword.map(s => Patch.addLeft(a.head.parent.get, s)).asPatch
 
     List(removal, add).asPatch
   }
