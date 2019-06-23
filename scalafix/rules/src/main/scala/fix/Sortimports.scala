@@ -44,21 +44,31 @@ class SortImports(config: SortImportsConfig) extends SemanticRule("SortImports")
       .sorted
       .groupBy(s => config.blocks.find(p => s.startsWith(p)))
 
+    val noneValues = importsGrouped.get(None)
+
+    val importsReplacedNone = importsGrouped - None ++ noneValues.fold(
+        Map.empty[Option[String], List[String]]
+      )(v => Map(Some("*") -> v))
+
+    println(importsReplacedNone)
+
     val imports: List[String] = config.blocks.flatMap { b =>
-      importsGrouped
-        .get(Some(b))
-        .fold(List.empty[String])((l: List[String]) => l ++ List(""))
-    } ++ importsGrouped.get(None).fold(List.empty[String])(identity)
+        importsReplacedNone
+          .get(Some(b))
+          .fold(List.empty[String])((l: List[String]) => l ++ List(""))
+      }
+
+    println(imports)
 
     val importsWithKeyword = imports.map {
-      case "" => "\n"
-      case x  => s"\nimport ${x}"
-    }.dropRight {
-      imports.lastOption match {
-        case Some("") => 1
-        case _        => 0
+        case "" => "\n"
+        case x  => s"\nimport ${x}"
+      }.dropRight {
+        imports.lastOption match {
+          case Some("") => 1
+          case _        => 0
+        }
       }
-    }
 
     val add = importsWithKeyword
       .map(s => Patch.addLeft(a.head.parent.get, s))
