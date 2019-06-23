@@ -25,7 +25,7 @@ inThisBuild(
 skip in publish := true
 
 lazy val rules = project.settings(
-  moduleName := "scalafix",
+  moduleName := "sort-imports",
   libraryDependencies += "ch.epfl.scala" %% "scalafix-core" % V.scalafixVersion,
   pgpPublicRing := file("/tmp/public.asc"),
   pgpSecretRing := file("/tmp/secret.asc"),
