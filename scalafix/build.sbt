@@ -26,11 +26,17 @@ skip in publish := true
 
 lazy val rules = project.settings(
   moduleName := "scalafix",
-  libraryDependencies += "ch.epfl.scala" %% "scalafix-core" % V.scalafixVersion
-)
+  libraryDependencies += "ch.epfl.scala" %% "scalafix-core" % V.scalafixVersion,
+  pgpPublicRing := file("/tmp/public.asc"),
+  pgpSecretRing := file("/tmp/secret.asc"),
+  releaseEarlyWith := SonatypePublisher,
+  scmInfo := Some(
+      ScmInfo(url("https://github.com/NeQuissimus/sort-imports/"), "scm:git:git@github.com:NeQuissimus/sort-imports.git")
+    )
+  )
 
 lazy val input = project.settings(
-  skip in publish := true
+    skip in publish := true
 )
 
 lazy val output = project.settings(
@@ -48,7 +54,7 @@ lazy val tests = project
     scalafixTestkitInputSourceDirectories :=
       sourceDirectories.in(input, Compile).value,
     scalafixTestkitInputClasspath :=
-      fullClasspath.in(input, Compile).value,
+      fullClasspath.in(input, Compile).value
   )
   .dependsOn(rules)
   .enablePlugins(ScalafixTestkitPlugin)
