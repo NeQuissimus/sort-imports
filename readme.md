@@ -24,9 +24,9 @@ import java.util.Map
 import scala.collection._
 import scala.util._
 
-import com.sun._
-
 import com.oracle.net._
+
+import com.sun._
 ```
 
 if the blocks from the below _Configuration_ example are used.
