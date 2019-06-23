@@ -7,7 +7,7 @@ jobs:
       - checkout
       - restore_cache:
           key: sbt-cache
-      - run: cd scalafix && sbt tests/test
+      - run: cd scalafix && sbt scalafmtCheckAll && sbt tests/test
       - save_cache:
           key: sbt-cache
           paths:

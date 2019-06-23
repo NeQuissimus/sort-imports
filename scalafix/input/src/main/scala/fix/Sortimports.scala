@@ -6,7 +6,7 @@ rule = SortImports
  "*",
  "com.sun"
  ]
-*/
+ */
 package fix
 
 import scala.util._

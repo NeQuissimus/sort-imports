@@ -9,7 +9,7 @@ import scala.meta._
 final case class SortImportsConfig(blocks: List[String] = List.empty)
 
 object SortImportsConfig {
-  val default = SortImportsConfig()
+  val default          = SortImportsConfig()
   implicit val surface = generic.deriveSurface[SortImportsConfig]
   implicit val decoder = generic.deriveDecoder[SortImportsConfig](default)
   implicit val encoder = generic.deriveEncoder[SortImportsConfig]
@@ -23,44 +23,46 @@ class SortImports(config: SortImportsConfig) extends SemanticRule("SortImports")
   override def isRewrite: Boolean = true
 
   override def withConfiguration(config: Configuration): Configured[Rule] =
-      config.conf
-        .getOrElse("SortImports")(this.config)
-        .map(new SortImports(_))
+    config.conf
+      .getOrElse("SortImports")(this.config)
+      .map(new SortImports(_))
 
   override def fix(implicit doc: SemanticDocument): Patch = {
     val a: List[Importer] = doc.tree.collect {
-        case i: Importer => Some(i)
-        case _ => None
-      }.filter(_.isDefined).map(_.get)
+      case i: Importer => Some(i)
+      case _           => None
+    }.filter(_.isDefined).map(_.get)
 
     val removal = a.map { importers =>
-        importers.importees.collect {
-          case importee: Importee => Patch.removeImportee(importee).atomic
-        }.asPatch
+      importers.importees.collect {
+        case importee: Importee => Patch.removeImportee(importee).atomic
       }.asPatch
+    }.asPatch
 
     val importsGrouped = a
       .map(_.toString)
       .sorted
       .groupBy(s => config.blocks.find(p => s.startsWith(p)))
 
-    val imports: List[String] = config.blocks.flatMap(b => importsGrouped.get(Some(b))
-                                                        .fold(List.empty[String])(
-                                                          (l: List[String]) => l ++ List("")
-                                                        )) ++ importsGrouped.get(None).fold(List.empty[String])(identity)
+    val imports: List[String] = config.blocks.flatMap { b =>
+      importsGrouped
+        .get(Some(b))
+        .fold(List.empty[String])((l: List[String]) => l ++ List(""))
+    } ++ importsGrouped.get(None).fold(List.empty[String])(identity)
 
     val importsWithKeyword = imports.map {
-        case "" => "\n"
-        case x => s"\nimport ${x}"
-      }.dropRight {
-
-        imports.lastOption match {
-          case Some("") => 1
-          case _ => 0
-        }
+      case "" => "\n"
+      case x  => s"\nimport ${x}"
+    }.dropRight {
+      imports.lastOption match {
+        case Some("") => 1
+        case _        => 0
       }
+    }
 
-    val add = importsWithKeyword.map(s => Patch.addLeft(a.head.parent.get, s)).asPatch
+    val add = importsWithKeyword
+      .map(s => Patch.addLeft(a.head.parent.get, s))
+      .asPatch
 
     List(removal, add).asPatch
   }
