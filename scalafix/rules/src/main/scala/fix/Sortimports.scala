@@ -29,20 +29,20 @@ class SortImports(config: SortImportsConfig) extends SemanticRule("SortImports")
 
   override def fix(implicit doc: SemanticDocument): Patch = {
     val a: List[Importer] = doc.tree.collect {
-        case i: Importer =>
-          val grandparent = i.parent.flatMap(_.parent)
-            grandparent match {
-              case Some(_: Pkg) => Some(i)
-              case Some(_: Source) => Some(i)
-              case _ => None
-            }
-        case _           => None
-      }.filter(_.isDefined).map(_.get)
+      case i: Importer =>
+        val grandparent = i.parent.flatMap(_.parent)
+        grandparent match {
+          case Some(_: Pkg)    => Some(i)
+          case Some(_: Source) => Some(i)
+          case _               => None
+        }
+      case _ => None
+    }.filter(_.isDefined).map(_.get)
 
     val removal = a.map { importers =>
-        importers.importees.collect {
-          case importee: Importee => Patch.removeImportee(importee).atomic
-        }.asPatch
+      importers.importees.collect {
+        case importee: Importee => Patch.removeImportee(importee).atomic
+      }.asPatch
     }.asPatch
 
     val importsGrouped = a
@@ -53,24 +53,24 @@ class SortImports(config: SortImportsConfig) extends SemanticRule("SortImports")
     val noneValues = importsGrouped.get(None)
 
     val importsReplacedNone = importsGrouped - None ++ noneValues.fold(
-        Map.empty[Option[String], List[String]]
-      )(v => Map(Some("*") -> v))
+      Map.empty[Option[String], List[String]]
+    )(v => Map(Some("*") -> v))
 
     val imports: List[String] = config.blocks.flatMap { b =>
-        importsReplacedNone
-          .get(Some(b))
-          .fold(List.empty[String])((l: List[String]) => l ++ List(""))
-      }
+      importsReplacedNone
+        .get(Some(b))
+        .fold(List.empty[String])((l: List[String]) => l ++ List(""))
+    }
 
     val importsWithKeyword = imports.map {
-        case "" => "\n"
-        case x  => s"\nimport ${x}"
-      }.dropRight {
-        imports.lastOption match {
-          case Some("") => 1
-          case _        => 0
-        }
+      case "" => "\n"
+      case x  => s"\nimport ${x}"
+    }.dropRight {
+      imports.lastOption match {
+        case Some("") => 1
+        case _        => 0
       }
+    }
 
     val add = importsWithKeyword
       .map(s => Patch.addLeft(a.head.parent.get, s))
