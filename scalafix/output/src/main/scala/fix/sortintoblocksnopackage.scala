@@ -1,5 +1,3 @@
-package fix
-
 import java.math.BigInteger
 import java.util.Map
 
@@ -10,6 +8,6 @@ import com.oracle.net._
 
 import com.sun.awt._
 
-object Sortimports {
+object SortIntoBlocksNoPackage {
   // Add code that needs fixing here.
 }

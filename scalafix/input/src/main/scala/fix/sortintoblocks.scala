@@ -16,6 +16,6 @@ import com.oracle.net._
 import com.sun.awt._
 import java.math.BigInteger
 
-object Sortimports {
+object SortIntoBlocks {
   // Add code that needs fixing here.
 }
