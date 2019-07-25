@@ -6,7 +6,7 @@ import metaconfig.generic
 import scalafix.v1._
 import scala.meta._
 
-final case class SortImportsConfig(blocks: List[String] = List.empty)
+final case class SortImportsConfig(blocks: List[String] = List("*"))
 
 object SortImportsConfig {
   val default          = SortImportsConfig()
@@ -19,7 +19,7 @@ class SortImports(config: SortImportsConfig) extends SemanticRule("SortImports")
   def this() = this(SortImportsConfig.default)
 
   override def description: String =
-    "Removes unused imports and terms that reported by the compiler under -Ywarn-unused"
+    "Sorts imports and groups them based on configuration"
   override def isRewrite: Boolean = true
 
   override def withConfiguration(config: Configuration): Configured[Rule] =
@@ -28,6 +28,7 @@ class SortImports(config: SortImportsConfig) extends SemanticRule("SortImports")
       .map(new SortImports(_))
 
   override def fix(implicit doc: SemanticDocument): Patch = {
+
     val a: List[Importer] = doc.tree.collect {
       case i: Importer =>
         val grandparent = i.parent.flatMap(_.parent)
@@ -39,11 +40,28 @@ class SortImports(config: SortImportsConfig) extends SemanticRule("SortImports")
       case _ => None
     }.filter(_.isDefined).map(_.get)
 
+    val is = doc.tree.collect {
+      case i: Import => i
+    }
+
+    val lines = is.map(_.pos.endLine)
+    val range = lines match {
+      case Nil => Range(0, 0, 1) // effectively empty
+      case _   => Range(lines.min, lines.max)
+    }
+    val empties = range.diff(lines)
+
+    val tokens = doc.tokens.collect {
+      case t if empties.contains(t.pos.endLine) => t
+    }
+
     val removal = a.map { importers =>
       importers.importees.collect {
         case importee: Importee => Patch.removeImportee(importee).atomic
       }.asPatch
     }.asPatch
+
+    val emptyRemoval = tokens.map(Patch.removeToken).asPatch
 
     val importsGrouped = a
       .map(_.toString)
@@ -76,7 +94,6 @@ class SortImports(config: SortImportsConfig) extends SemanticRule("SortImports")
       .map(s => Patch.addLeft(a.head.parent.get, s))
       .asPatch
 
-    List(removal, add).asPatch
+    List(emptyRemoval, removal, add).asPatch
   }
-
 }
