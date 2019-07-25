@@ -33,7 +33,7 @@ if the blocks from the below _Configuration_ example are used.
 
 ## Usage
 
-`scalafixDependencies += "com.nequissimus" %% "sort-imports" % "0.1.2"`
+`scalafixDependencies += "com.nequissimus" %% "sort-imports" % "0.1.3"`
 
 ## Configuration
 
