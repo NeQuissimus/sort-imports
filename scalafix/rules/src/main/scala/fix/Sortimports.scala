@@ -5,6 +5,7 @@ import metaconfig.generic
 
 import scalafix.v1._
 import scala.meta._
+import scala.collection.mutable.ListBuffer
 
 final case class SortImportsConfig(blocks: List[String] = List("*"))
 
@@ -29,71 +30,76 @@ class SortImports(config: SortImportsConfig) extends SemanticRule("SortImports")
 
   override def fix(implicit doc: SemanticDocument): Patch = {
 
-    val a: List[Importer] = doc.tree.collect {
-      case i: Importer =>
-        val grandparent = i.parent.flatMap(_.parent)
-        grandparent match {
-          case Some(_: Pkg)    => Some(i)
-          case Some(_: Source) => Some(i)
-          case _               => None
-        }
-      case _ => None
-    }.filter(_.isDefined).map(_.get)
-
-    val is = doc.tree.collect {
-      case i: Import => i
-    }
-
-    val lines = is.map(_.pos.endLine)
-    val range = lines match {
-      case Nil => Range(0, 0, 1) // effectively empty
-      case _   => Range(lines.min, lines.max)
-    }
-    val empties = range.diff(lines)
-
-    val tokens = doc.tokens.collect {
-      case t if empties.contains(t.pos.endLine) => t
-    }
-
-    val removal = a.map { importers =>
-      importers.importees.collect {
-        case importee: Importee => Patch.removeImportee(importee).atomic
-      }.asPatch
-    }.asPatch
-
-    val emptyRemoval = tokens.map(Patch.removeToken).asPatch
-
-    val importsGrouped = a
-      .map(_.toString)
-      .sorted
-      .groupBy(s => config.blocks.find(p => s.startsWith(p)))
-
-    val noneValues = importsGrouped.get(None)
-
-    val importsReplacedNone = importsGrouped - None ++ noneValues.fold(
-      Map.empty[Option[String], List[String]]
-    )(v => Map(Some("*") -> v))
-
-    val imports: List[String] = config.blocks.flatMap { b =>
-      importsReplacedNone
-        .get(Some(b))
-        .fold(List.empty[String])((l: List[String]) => l ++ List(""))
-    }
-
-    val importsWithKeyword = imports.map {
-      case "" => "\n"
-      case x  => s"\nimport ${x}"
-    }.dropRight {
-      imports.lastOption match {
-        case Some("") => 1
-        case _        => 0
+    // Traverse full code tree. Stop when import branches are found and add them to last list in buf
+    // If an empty line is found add an empty list to buf
+    val buf:ListBuffer[ListBuffer[Tree]] = ListBuffer(ListBuffer.empty)
+    val traverser: Traverser = new Traverser {
+      override def apply(tree: Tree): Unit = tree match {
+        case x:Import =>
+          buf.last.append(x)
+        case node =>
+          buf.append(ListBuffer.empty)
+          super.apply(node)
       }
     }
+    traverser(doc.tree)
 
-    val add = importsWithKeyword
-      .map(s => Patch.addLeft(a.head.parent.get, s))
-      .asPatch
+    // Contains groups of imports
+    val unsorted: ListBuffer[ListBuffer[Tree]] = buf
+      .filter(_.length > 0)
+      .map(i => {
+        i.map(_.children).flatten
+      })
 
-    List(emptyRemoval, removal, add).asPatch
+    // Remove all newlines within import groups
+    val removeLinesPatch: ListBuffer[Patch] = unsorted.map(i => {
+      doc.tokens.collect {
+        case e if e.productPrefix == "LF"
+          && e.pos.start > i.head.pos.start
+          && e.pos.end < i.last.pos.end
+          => e
+      }
+    }).flatten.map(Patch.removeToken(_))
+
+    // Sort each group of imports
+    val sorted: ListBuffer[ListBuffer[String]] = unsorted.map(importLines => {
+      // Sort all imports then group based on SortImports rule
+      val importsGrouped = importLines.sortWith((el1:Tree, el2:Tree) => {
+        el1.toString.compareTo(el2.toString) < 0
+      }).groupBy(s => {
+        config.blocks.find(p => s.toString.startsWith(p))
+      })
+
+      // If a start is not found in the SortImports rule, add it to the end
+      val fixedList: List[String] = config.blocks
+        .find(_ == "*")
+        .fold(config.blocks :+ "*")(_ => config.blocks)
+
+      // Sort grouped imports and convert to strings
+      val importsSorted = fixedList.foldLeft(ListBuffer[ListBuffer[String]]())((acc, i) => {
+        importsGrouped
+          .find(_._1.getOrElse("*") == i) // If key is None, make key *
+          .fold(acc)(found => {
+            acc += (found._2.map(_.toString).init += (found._2.last.toString + "\n"))
+          })
+      }).flatten
+
+      // Remove extra newline on end of imports
+      importsSorted.init :+ importsSorted.last.dropRight(1)
+    })
+
+    val combined: ListBuffer[ListBuffer[(Tree, String)]] = unsorted
+      .zip(sorted)
+      .map(i => i._1.zip(i._2))
+
+    // Create patches using sorted - unsorted pairs
+    // Essentially imports are playing musical chairs
+    val patches: ListBuffer[Patch] = combined.map(el => {
+      el.init.map(i => {
+        Patch.replaceTree(i._1, i._2 + "\n")
+      }) :+ Patch.replaceTree(el.last._1, el.last._2)
+    }).flatten
+
+    List(patches, removeLinesPatch).flatten.asPatch
   }
 }

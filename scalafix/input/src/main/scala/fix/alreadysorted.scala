@@ -2,7 +2,7 @@
  rule = SortImports
  SortImports.blocks = [
  "java",
- "scala",
+ "scala"
  ]
  */
 import java.math.BigInteger
