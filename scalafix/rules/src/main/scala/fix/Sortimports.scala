@@ -32,10 +32,10 @@ class SortImports(config: SortImportsConfig) extends SemanticRule("SortImports")
 
     // Traverse full code tree. Stop when import branches are found and add them to last list in buf
     // If an empty line is found add an empty list to buf
-    val buf:ListBuffer[ListBuffer[Tree]] = ListBuffer(ListBuffer.empty)
+    val buf: ListBuffer[ListBuffer[Tree]] = ListBuffer(ListBuffer.empty)
     val traverser: Traverser = new Traverser {
       override def apply(tree: Tree): Unit = tree match {
-        case x:Import =>
+        case x: Import =>
           buf.last.append(x)
         case node =>
           buf.append(ListBuffer.empty)
@@ -52,23 +52,29 @@ class SortImports(config: SortImportsConfig) extends SemanticRule("SortImports")
       })
 
     // Remove all newlines within import groups
-    val removeLinesPatch: ListBuffer[Patch] = unsorted.map(i => {
-      doc.tokens.collect {
-        case e if e.productPrefix == "LF"
-          && e.pos.start > i.head.pos.start
-          && e.pos.end < i.last.pos.end
-          => e
-      }
-    }).flatten.map(Patch.removeToken(_))
+    val removeLinesPatch: ListBuffer[Patch] = unsorted
+      .map(i => {
+        doc.tokens.collect {
+          case e
+              if e.productPrefix == "LF"
+                && e.pos.start > i.head.pos.start
+                && e.pos.end < i.last.pos.end =>
+            e
+        }
+      })
+      .flatten
+      .map(Patch.removeToken(_))
 
     // Sort each group of imports
     val sorted: ListBuffer[ListBuffer[String]] = unsorted.map(importLines => {
       // Sort all imports then group based on SortImports rule
-      val importsGrouped = importLines.sortWith((el1:Tree, el2:Tree) => {
-        el1.toString.compareTo(el2.toString) < 0
-      }).groupBy(s => {
-        config.blocks.find(p => s.toString.startsWith(p))
-      })
+      val importsGrouped = importLines
+        .sortWith((el1: Tree, el2: Tree) => {
+          el1.toString.compareTo(el2.toString) < 0
+        })
+        .groupBy(s => {
+          config.blocks.find(p => s.toString.startsWith(p))
+        })
 
       // If a start is not found in the SortImports rule, add it to the end
       val fixedList: List[String] = config.blocks
@@ -76,13 +82,15 @@ class SortImports(config: SortImportsConfig) extends SemanticRule("SortImports")
         .fold(config.blocks :+ "*")(_ => config.blocks)
 
       // Sort grouped imports and convert to strings
-      val importsSorted = fixedList.foldLeft(ListBuffer[ListBuffer[String]]())((acc, i) => {
-        importsGrouped
-          .find(_._1.getOrElse("*") == i) // If key is None, make key *
-          .fold(acc)(found => {
-            acc += (found._2.map(_.toString).init += (found._2.last.toString + "\n"))
-          })
-      }).flatten
+      val importsSorted = fixedList
+        .foldLeft(ListBuffer[ListBuffer[String]]())((acc, i) => {
+          importsGrouped
+            .find(_._1.getOrElse("*") == i) // If key is None, make key *
+            .fold(acc)(found => {
+              acc += (found._2.map(_.toString).init += (found._2.last.toString + "\n"))
+            })
+        })
+        .flatten
 
       // Remove extra newline on end of imports
       importsSorted.init :+ importsSorted.last.dropRight(1)
@@ -94,11 +102,13 @@ class SortImports(config: SortImportsConfig) extends SemanticRule("SortImports")
 
     // Create patches using sorted - unsorted pairs
     // Essentially imports are playing musical chairs
-    val patches: ListBuffer[Patch] = combined.map(el => {
-      el.init.map(i => {
-        Patch.replaceTree(i._1, i._2 + "\n")
-      }) :+ Patch.replaceTree(el.last._1, el.last._2)
-    }).flatten
+    val patches: ListBuffer[Patch] = combined
+      .map(el => {
+        el.init.map(i => {
+          Patch.replaceTree(i._1, i._2 + "\n")
+        }) :+ Patch.replaceTree(el.last._1, el.last._2)
+      })
+      .flatten
 
     List(patches, removeLinesPatch).flatten.asPatch
   }
