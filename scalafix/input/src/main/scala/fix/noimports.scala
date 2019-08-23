@@ -2,7 +2,7 @@
  rule = SortImports
  SortImports.blocks = [
  "java",
- "scala",
+ "scala"
  ]
  */
 object NoImports {
