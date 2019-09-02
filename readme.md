@@ -31,9 +31,14 @@ import com.sun._
 
 if the blocks from the below _Configuration_ example are used.
 
+
+**Important**
+sort-imports does not (currently) take into account shadowing.
+It is a faily dumb sorter of imports. If your code is using shadowing, it may end up no longer compiling!
+
 ## Usage
 
-`scalafixDependencies += "com.nequissimus" %% "sort-imports" % "0.1.3"`
+`scalafixDependencies += "com.nequissimus" %% "sort-imports" % "0.2.0"`
 
 ## Configuration
 
