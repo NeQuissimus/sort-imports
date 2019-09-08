@@ -42,13 +42,18 @@ class SortImports(config: SortImportsConfig) extends SemanticRule("SortImports")
           super.apply(node)
       }
     }
+
     traverser(doc.tree)
 
     // Contains groups of imports
     val unsorted: ListBuffer[ListBuffer[Tree]] = buf
       .filter(_.length > 0)
       .map(i => {
-        i.map(_.children).flatten
+        i.map({
+            case x if x.children.size == 1 => x.children
+            case x                         => List(x)
+          })
+          .flatten
       })
 
     // Remove all newlines within import groups
