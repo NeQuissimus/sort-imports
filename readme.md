@@ -48,6 +48,6 @@ SortImports.blocks = [
   "java.",
   "scala.",
   "*",
-  "com.sun"
+  "com.sun."
 ]
 ```
