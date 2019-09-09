@@ -45,9 +45,9 @@ It is a faily dumb sorter of imports. If your code is using shadowing, it may en
 ```
 rule = SortImports
 SortImports.blocks = [
-  "java",
-  "scala",
+  "java.",
+  "scala.",
   "*",
-  "com.sun"
+  "com.sun."
 ]
 ```
