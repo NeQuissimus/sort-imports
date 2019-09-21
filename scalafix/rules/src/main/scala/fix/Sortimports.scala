@@ -1,11 +1,12 @@
 package fix
 
+import scala.collection.mutable.ListBuffer
+import scala.meta._
+
 import metaconfig.Configured
 import metaconfig.generic
 
 import scalafix.v1._
-import scala.meta._
-import scala.collection.mutable.ListBuffer
 
 final case class SortImportsConfig(blocks: List[String] = List("*"))
 
