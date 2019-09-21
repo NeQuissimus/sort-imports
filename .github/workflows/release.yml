@@ -1,0 +1,22 @@
+name: Release
+
+on:
+  project_column:
+    types: [published]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v1
+    - name: Fetch tags
+      run: git fetch --tags
+    - name: Write secrets
+      run: |
+        echo -n "${PGP_PUBLIC}" | base64 -d > /tmp/public.asc
+        echo -n "${PGP_SECRET}" | base64 -d > /tmp/secret.asc
+    - name: Release
+      run: cd scalafix && sbt rules/releaseEarly
+ 
