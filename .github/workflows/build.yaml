@@ -6,11 +6,10 @@ jobs:
   build:
 
     runs-on: ubuntu-latest
-    
+
     steps:
     - uses: actions/checkout@v1
     - name: Lint
       run: cd scalafix && sbt scalafmtCheckAll; cd -
     - name: Test
       run: cd scalafix && sbt tests/test; cd -
- 

@@ -1,22 +1,28 @@
 name: Release
 
 on:
-  project_column:
-    types: [published]
+  push:
+    tags:
+    - '*'
 
 jobs:
   build:
 
     runs-on: ubuntu-latest
-    
+
     steps:
     - uses: actions/checkout@v1
-    - name: Fetch tags
-      run: git fetch --tags
     - name: Write secrets
       run: |
         echo -n "${PGP_PUBLIC}" | base64 -d > /tmp/public.asc
-        echo -n "${PGP_SECRET}" | base64 -d > /tmp/secret.asc
+        echo -n "${PGP_PRIVATE}" | base64 -d > /tmp/secret.asc
+      env:
+        PGP_PRIVATE: ${{ secrets.PGP_PRIVATE }}
+        PGP_PUBLIC: ${{ secrets.PGP_PUBLIC }}
     - name: Release
       run: cd scalafix && sbt rules/releaseEarly
- 
+      env:
+        CI: GitHub
+        PGP_PASSWORD: ${{ secrets.PGP_PASSWORD }}
+        SONATYPE_USER: ${{ secrets.SONATYPE_USER }}
+        SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
