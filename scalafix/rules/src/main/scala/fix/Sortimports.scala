@@ -49,13 +49,6 @@ class SortImports(config: SortImportsConfig) extends SemanticRule("SortImports")
     // Contains groups of imports
     val unsorted: ListBuffer[ListBuffer[Tree]] = buf
       .filter(_.length > 0)
-      .map(i => {
-        i.map({
-            case x if x.children.size == 1 => x.children
-            case x                         => List(x)
-          })
-          .flatten
-      })
 
     // Remove all newlines within import groups
     val removeLinesPatch: ListBuffer[Patch] = unsorted
@@ -74,12 +67,13 @@ class SortImports(config: SortImportsConfig) extends SemanticRule("SortImports")
     // Sort each group of imports
     val sorted: ListBuffer[ListBuffer[String]] = unsorted.map(importLines => {
       // Sort all imports then group based on SortImports rule
+      // In case of import list, the first element in the list is significant
       val importsGrouped = importLines
-        .sortWith((el1: Tree, el2: Tree) => {
-          el1.toString.compareTo(el2.toString) < 0
+        .sortWith((line1: Tree, line2: Tree) => {
+          line1.children.head.toString.compareTo(line2.children.head.toString) < 0
         })
-        .groupBy(s => {
-          config.blocks.find(p => s.toString.startsWith(p))
+        .groupBy(line => {
+          config.blocks.find(block => line.children.head.toString.startsWith(block))
         })
 
       // If a start is not found in the SortImports rule, add it to the end
