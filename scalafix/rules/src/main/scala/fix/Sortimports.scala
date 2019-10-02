@@ -33,7 +33,7 @@ class SortImports(config: SortImportsConfig) extends SemanticRule("SortImports")
 
     // Traverse full code tree. Stop when import branches are found and add them to last list in buf
     // If an empty line is found add an empty list to buf
-    val buf: ListBuffer[ListBuffer[Tree]] = ListBuffer(ListBuffer.empty)
+    val buf: ListBuffer[ListBuffer[Import]] = ListBuffer(ListBuffer.empty)
     val traverser: Traverser = new Traverser {
       override def apply(tree: Tree): Unit = tree match {
         case x: Import =>
@@ -47,7 +47,7 @@ class SortImports(config: SortImportsConfig) extends SemanticRule("SortImports")
     traverser(doc.tree)
 
     // Contains groups of imports
-    val unsorted: ListBuffer[ListBuffer[Tree]] = buf
+    val unsorted: ListBuffer[ListBuffer[Import]] = buf
       .filter(_.length > 0)
 
     // Remove all newlines within import groups
@@ -69,7 +69,7 @@ class SortImports(config: SortImportsConfig) extends SemanticRule("SortImports")
       // Sort all imports then group based on SortImports rule
       // In case of import list, the first element in the list is significant
       val importsGrouped = importLines
-        .sortWith((line1: Tree, line2: Tree) => {
+        .sortWith((line1, line2) => {
           line1.children.head.toString.compareTo(line2.children.head.toString) < 0
         })
         .groupBy(line => {
@@ -96,7 +96,7 @@ class SortImports(config: SortImportsConfig) extends SemanticRule("SortImports")
       importsSorted.init :+ importsSorted.last.dropRight(1)
     })
 
-    val combined: ListBuffer[ListBuffer[(Tree, String)]] = unsorted
+    val combined: ListBuffer[ListBuffer[(Import, String)]] = unsorted
       .zip(sorted)
       .map(i => i._1.zip(i._2))
 
