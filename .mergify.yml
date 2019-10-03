@@ -3,7 +3,7 @@ pull_request_rules:
     conditions:
       - base=master
       - "#approved-reviews-by>=1"
-      - "status-success=Build / build (pull_request)"
+      - status-success=build
     actions:
       merge:
         strict: true
