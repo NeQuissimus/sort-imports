@@ -66,6 +66,8 @@ class SortImports(config: SortImportsConfig) extends SemanticRule("SortImports")
 
     // Sort each group of imports
     val sorted: ListBuffer[ListBuffer[String]] = unsorted.map(importLines => {
+      val configBlocksByLengthDesc = config.blocks.sortBy(-_.length)
+
       // Sort all imports then group based on SortImports rule
       // In case of import list, the first element in the list is significant
       val importsGrouped = importLines
@@ -73,7 +75,7 @@ class SortImports(config: SortImportsConfig) extends SemanticRule("SortImports")
           line1.children.head.toString.compareTo(line2.children.head.toString) < 0
         })
         .groupBy(line => {
-          config.blocks.find(block => line.children.head.toString.startsWith(block))
+          configBlocksByLengthDesc.find(block => line.children.head.toString.startsWith(block))
         })
 
       // If a start is not found in the SortImports rule, add it to the end
