@@ -17,7 +17,7 @@ object SortImportsConfig {
   implicit val encoder = generic.deriveEncoder[SortImportsConfig]
 }
 
-class SortImports(config: SortImportsConfig) extends SemanticRule("SortImports") {
+class SortImports(config: SortImportsConfig) extends SyntacticRule("SortImports") {
   def this() = this(SortImportsConfig.default)
 
   override def description: String =
@@ -29,7 +29,7 @@ class SortImports(config: SortImportsConfig) extends SemanticRule("SortImports")
       .getOrElse("SortImports")(this.config)
       .map(new SortImports(_))
 
-  override def fix(implicit doc: SemanticDocument): Patch = {
+  override def fix(implicit doc: SyntacticDocument): Patch = {
 
     // Traverse full code tree. Stop when import branches are found and add them to last list in buf
     // If an empty line is found add an empty list to buf
