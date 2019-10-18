@@ -2,6 +2,7 @@ package fix
 
 import scala.collection.mutable.ListBuffer
 import scala.meta._
+import scala.meta.tokens.Token.Comment
 
 import metaconfig.Configured
 import metaconfig.generic
@@ -50,6 +51,10 @@ class SortImports(config: SortImportsConfig) extends SyntacticRule("SortImports"
     val unsorted: ListBuffer[ListBuffer[Import]] = buf
       .filter(_.length > 0)
 
+    // Trailing comments
+    val comments: Map[Import, Option[Comment]] =
+      unsorted.flatten.map(x => (x -> doc.comments.trailing(x).headOption)).filterNot(_._2.isEmpty).toMap
+
     // Remove all newlines within import groups
     val removeLinesPatch: ListBuffer[Patch] = unsorted
       .map(i => {
@@ -63,6 +68,18 @@ class SortImports(config: SortImportsConfig) extends SyntacticRule("SortImports"
       })
       .flatten
       .map(Patch.removeToken(_))
+
+    // Remove comments and whitespace between imports and comments
+    val removeCommentsPatch: Iterable[Patch] = comments.values.flatten.map(Patch.removeToken _)
+    val removeCommentSpacesPatch: Iterable[Patch] = comments.flatMap {
+      case (k, v) =>
+        v.map { v =>
+          val num = v.pos.start - k.pos.end
+          ((0 to num).map { diff =>
+            new Token.Space(Input.None, v.dialect, k.pos.end + diff)
+          }).toList
+        }.getOrElse(List.empty)
+    }.map(Patch.removeToken _)
 
     // Sort each group of imports
     val sorted: ListBuffer[ListBuffer[String]] = unsorted.map(importLines => {
@@ -89,7 +106,8 @@ class SortImports(config: SortImportsConfig) extends SyntacticRule("SortImports"
           importsGrouped
             .find(_._1.getOrElse("*") == i) // If key is None, make key *
             .fold(acc)(found => {
-              acc += (found._2.map(_.toString).init += (found._2.last.toString + "\n"))
+              val commentOrNot = comments.get(found._2.last).map(" " + _.mkString)
+              acc += (found._2.map(_.toString).init += (found._2.last.toString + commentOrNot.getOrElse("") + "\n"))
             })
         })
         .flatten
@@ -100,7 +118,9 @@ class SortImports(config: SortImportsConfig) extends SyntacticRule("SortImports"
 
     val combined: ListBuffer[ListBuffer[(Import, String)]] = unsorted
       .zip(sorted)
-      .map(i => i._1.zip(i._2))
+      .map(
+        i => i._1.zip(i._2)
+      )
 
     // Create patches using sorted - unsorted pairs
     // Essentially imports are playing musical chairs
@@ -112,6 +132,6 @@ class SortImports(config: SortImportsConfig) extends SyntacticRule("SortImports"
       })
       .flatten
 
-    List(patches, removeLinesPatch).flatten.asPatch
+    List(patches, removeLinesPatch, removeCommentsPatch, removeCommentSpacesPatch).flatten.asPatch
   }
 }
