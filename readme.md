@@ -38,7 +38,7 @@ It is a faily dumb sorter of imports. If your code is using shadowing, it may en
 
 ## Usage
 
-`scalafixDependencies += "com.nequissimus" %% "sort-imports" % "0.3.0"`
+`scalafixDependencies += "com.nequissimus" %% "sort-imports" % "0.3.1"`
 
 ## Configuration
 
