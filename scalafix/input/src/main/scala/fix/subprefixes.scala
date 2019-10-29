@@ -11,9 +11,9 @@
 
  rule = SortImports
  SortImports.blocks = [
- "scala."
- "scala.collection."
- "scala.annotation."
+ "scala\\."
+ "scala\\.collection\\."
+ "scala\\.annotation\\."
  ]
  */
 

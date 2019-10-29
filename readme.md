@@ -4,7 +4,7 @@
 
 SortImports is a simplistic Scalafix rule.
 
-It will organize imports into prefix-blocks and order imports inside those blocks alphabetically.
+It will organize imports into prefix-blocks (regex based) and order imports inside those blocks alphabetically.
 
 For example, these imports
 
@@ -34,7 +34,7 @@ if the blocks from the below _Configuration_ example are used.
 
 **Important**
 sort-imports does not (currently) take into account shadowing.
-It is a faily dumb sorter of imports. If your code is using shadowing, it may end up no longer compiling!
+It is a fairly dumb sorter of imports. If your code is using shadowing, it may end up no longer compiling!
 
 ## Usage
 
@@ -45,9 +45,9 @@ It is a faily dumb sorter of imports. If your code is using shadowing, it may en
 ```
 rule = SortImports
 SortImports.blocks = [
-  "java.",
-  "scala.",
+  "java\\.",
+  "scala\\.",
   "*",
-  "com.sun."
+  "com\\.sun\\."
 ]
 ```

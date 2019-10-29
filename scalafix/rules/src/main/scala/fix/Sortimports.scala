@@ -92,7 +92,7 @@ class SortImports(config: SortImportsConfig) extends SyntacticRule("SortImports"
           line1.children.head.toString.compareTo(line2.children.head.toString) < 0
         })
         .groupBy(line => {
-          configBlocksByLengthDesc.find(block => line.children.head.toString.startsWith(block))
+          configBlocksByLengthDesc.find(block => line.children.head.toString.matches("^" + block + ".*"))
         })
 
       // If a start is not found in the SortImports rule, add it to the end

@@ -3,7 +3,7 @@ rule = SortImports
  SortImports.blocks = [
  "java",
  "scala",
- "com.sun"
+ "com\\.sun"
  ]
  */
 import scala.util._

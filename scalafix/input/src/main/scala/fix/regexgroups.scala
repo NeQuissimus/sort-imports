@@ -1,19 +1,22 @@
 /*
  rule = SortImports
  SortImports.blocks = [
- "java",
- "scala",
+ "(java\\.|com\\.sun)",
+ "(scala|javax)",
  "*",
- "com\\.sun"
+ "com\\.oracle"
  ]
  */
-import scala.util._
+
 import scala.collection._
-import java.util.Map
 import com.oracle.net._
-import com.sun.awt._
+import scala.util._
 import java.math.BigInteger
 
-object SortIntoBlocksNoPackage {
+import javax.naming.Reference
+import org.w3c.dom._
+import java.util.Map
+
+object RegexGroups {
   // Add code that needs fixing here.
 }

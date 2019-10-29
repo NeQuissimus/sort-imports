@@ -4,7 +4,7 @@ rule = SortImports
  "java",
  "scala",
  "*",
- "com.sun"
+ "com\\.sun"
  ]
  */
 package fix
