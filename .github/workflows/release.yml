@@ -20,7 +20,7 @@ jobs:
         PGP_PRIVATE: ${{ secrets.PGP_PRIVATE }}
         PGP_PUBLIC: ${{ secrets.PGP_PUBLIC }}
     - name: Release
-      run: cd scalafix && sbt rules/releaseEarly
+      run: sbt rules/releaseEarly
       env:
         CI: GitHub
         PGP_PASSWORD: ${{ secrets.PGP_PASSWORD }}

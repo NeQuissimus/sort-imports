@@ -10,6 +10,6 @@ jobs:
     steps:
     - uses: actions/checkout@v1
     - name: Lint
-      run: cd scalafix && sbt scalafmtCheckAll; cd -
+      run: sbt scalafmtCheckAll
     - name: Test
-      run: cd scalafix && sbt tests/test; cd -
+      run: sbt tests/test
