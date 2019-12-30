@@ -56,17 +56,15 @@ class SortImports(config: SortImportsConfig) extends SyntacticRule("SortImports"
       unsorted.flatten.map(x => (x -> doc.comments.trailing(x).headOption)).filterNot(_._2.isEmpty).toMap
 
     // Remove all newlines within import groups
-    val removeLinesPatch: ListBuffer[Patch] = unsorted
-      .map(i => {
-        doc.tokens.collect {
-          case e
-              if e.productPrefix == "LF"
-                && e.pos.start > i.head.pos.start
-                && e.pos.end < i.last.pos.end =>
-            e
-        }
-      })
-      .flatten
+    val removeLinesPatch: ListBuffer[Patch] = unsorted.map { i =>
+      doc.tokens.collect {
+        case e
+            if e.productPrefix == "LF"
+              && e.pos.start > i.head.pos.start
+              && e.pos.end < i.last.pos.end =>
+          e
+      }
+    }.flatten
       .map(Patch.removeToken(_))
 
     // Remove comments and whitespace between imports and comments
@@ -82,18 +80,16 @@ class SortImports(config: SortImportsConfig) extends SyntacticRule("SortImports"
     }.map(Patch.removeToken _)
 
     // Sort each group of imports
-    val sorted: ListBuffer[ListBuffer[String]] = unsorted.map(importLines => {
+    val sorted: ListBuffer[ListBuffer[String]] = unsorted.map { importLines =>
       val configBlocksByLengthDesc = config.blocks.sortBy(-_.length)
 
       // Sort all imports then group based on SortImports rule
       // In case of import list, the first element in the list is significant
-      val importsGrouped = importLines
-        .sortWith((line1, line2) => {
-          line1.children.head.toString.compareTo(line2.children.head.toString) < 0
-        })
-        .groupBy(line => {
-          configBlocksByLengthDesc.find(block => line.children.head.toString.startsWith(block))
-        })
+      val importsGrouped = importLines.sortWith { (line1, line2) =>
+        line1.children.head.toString.compareTo(line2.children.head.toString) < 0
+      }.groupBy { line =>
+        configBlocksByLengthDesc.find(block => line.children.head.toString.startsWith(block))
+      }
 
       // If a start is not found in the SortImports rule, add it to the end
       val fixedList: List[String] = config.blocks
@@ -102,35 +98,31 @@ class SortImports(config: SortImportsConfig) extends SyntacticRule("SortImports"
 
       // Sort grouped imports and convert to strings
       val importsSorted = fixedList
-        .foldLeft(ListBuffer[ListBuffer[String]]())((acc, i) => {
+        .foldLeft(ListBuffer[ListBuffer[String]]()) { (acc, i) =>
           importsGrouped
             .find(_._1.getOrElse("*") == i) // If key is None, make key *
-            .fold(acc)(found => {
+            .fold(acc) { found =>
               val commentOrNot = comments.get(found._2.last).map(" " + _.mkString)
               acc += (found._2.map(_.toString).init += (found._2.last.toString + commentOrNot.getOrElse("") + "\n"))
-            })
-        })
+            }
+        }
         .flatten
 
       // Remove extra newline on end of imports
       importsSorted.init :+ importsSorted.last.dropRight(1)
-    })
+    }
 
     val combined: ListBuffer[ListBuffer[(Import, String)]] = unsorted
       .zip(sorted)
-      .map(
-        i => i._1.zip(i._2)
-      )
+      .map(i => i._1.zip(i._2))
 
     // Create patches using sorted - unsorted pairs
     // Essentially imports are playing musical chairs
-    val patches: ListBuffer[Patch] = combined
-      .map(el => {
-        el.init.map(i => {
-          Patch.replaceTree(i._1, i._2 + "\n")
-        }) :+ Patch.replaceTree(el.last._1, el.last._2)
-      })
-      .flatten
+    val patches: ListBuffer[Patch] = combined.map { el =>
+      el.init.map { i =>
+        Patch.replaceTree(i._1, i._2 + "\n")
+      } :+ Patch.replaceTree(el.last._1, el.last._2)
+    }.flatten
 
     List(patches, removeLinesPatch, removeCommentsPatch, removeCommentSpacesPatch).flatten.asPatch
   }

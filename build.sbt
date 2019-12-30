@@ -31,12 +31,12 @@ lazy val rules = project.settings(
   pgpSecretRing := file("/tmp/secret.asc"),
   releaseEarlyWith := SonatypePublisher,
   scmInfo := Some(
-      ScmInfo(url("https://github.com/NeQuissimus/sort-imports/"), "scm:git:git@github.com:NeQuissimus/sort-imports.git")
-    )
+    ScmInfo(url("https://github.com/NeQuissimus/sort-imports/"), "scm:git:git@github.com:NeQuissimus/sort-imports.git")
   )
+)
 
 lazy val input = project.settings(
-    skip in publish := true
+  skip in publish := true
 )
 
 lazy val output = project.settings(
