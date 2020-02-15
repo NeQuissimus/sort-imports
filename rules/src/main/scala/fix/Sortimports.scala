@@ -73,9 +73,7 @@ class SortImports(config: SortImportsConfig) extends SyntacticRule("SortImports"
       case (k, v) =>
         v.map { v =>
           val num = v.pos.start - k.pos.end
-          ((0 to num).map { diff =>
-            new Token.Space(Input.None, v.dialect, k.pos.end + diff)
-          }).toList
+          ((0 to num).map { diff => new Token.Space(Input.None, v.dialect, k.pos.end + diff) }).toList
         }.getOrElse(List.empty)
     }.map(Patch.removeToken _)
 
@@ -87,9 +85,7 @@ class SortImports(config: SortImportsConfig) extends SyntacticRule("SortImports"
       // In case of import list, the first element in the list is significant
       val importsGrouped = importLines.sortWith { (line1, line2) =>
         line1.children.head.toString.compareTo(line2.children.head.toString) < 0
-      }.groupBy { line =>
-        configBlocksByLengthDesc.find(block => line.children.head.toString.startsWith(block))
-      }
+      }.groupBy(line => configBlocksByLengthDesc.find(block => line.children.head.toString.startsWith(block)))
 
       // If a start is not found in the SortImports rule, add it to the end
       val fixedList: List[String] = config.blocks
