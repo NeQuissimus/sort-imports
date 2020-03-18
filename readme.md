@@ -51,6 +51,9 @@ It is a faily dumb sorter of imports. If your code is using shadowing, it may en
 
 Latest version: ![GitHub tag (latest SemVer)](https://img.shields.io/github/v/tag/NeQuissimus/sort-imports?sort=semver)
 
+Add `sonatype` as a resolver if you don't have it already:
+`resolvers += Resolver.sonatypeRepo("releases")`
+
 `scalafixDependencies += "com.nequissimus" %% "sort-imports" % "<VERSION>"`
 
 ## Configuration
