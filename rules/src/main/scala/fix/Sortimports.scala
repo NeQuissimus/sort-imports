@@ -56,7 +56,7 @@ class SortImports(config: SortImportsConfig) extends SyntacticRule("SortImports"
       unsorted.flatten.map(x => (x -> doc.comments.trailing(x).headOption)).filterNot(_._2.isEmpty).toMap
 
     // Remove all newlines within import groups
-    val removeLinesPatch: ListBuffer[Patch] = unsorted.map { i =>
+    val removeLinesPatch: ListBuffer[Patch] = unsorted.flatMap { i =>
       doc.tokens.collect {
         case e
             if e.productPrefix == "LF"
@@ -64,8 +64,7 @@ class SortImports(config: SortImportsConfig) extends SyntacticRule("SortImports"
               && e.pos.end < i.last.pos.end =>
           e
       }
-    }.flatten
-      .map(Patch.removeToken(_))
+    }.map(Patch.removeToken(_))
 
     // Remove comments and whitespace between imports and comments
     val removeCommentsPatch: Iterable[Patch] = comments.values.flatten.map(Patch.removeToken _)
@@ -114,12 +113,12 @@ class SortImports(config: SortImportsConfig) extends SyntacticRule("SortImports"
 
     // Create patches using sorted - unsorted pairs
     // Essentially imports are playing musical chairs
-    val patches: ListBuffer[Patch] = combined.map { el =>
+    val patches: ListBuffer[Patch] = combined.flatMap { el =>
       el.init.map { i =>
         Patch.replaceTree(i._1, i._2 + "\n")
       } :+ Patch.replaceTree(el.last._1, el.last._2)
-    }.flatten
+    }
 
-    List(patches, removeLinesPatch, removeCommentsPatch, removeCommentSpacesPatch).flatten.asPatch
+    List(patches, removeLinesPatch, removeCommentsPatch, removeCommentSpacesPatch).flatten.asPatch.atomic
   }
 }
