@@ -51,7 +51,7 @@ It is a faily dumb sorter of imports. If your code is using shadowing, it may en
 
 Latest version: ![GitHub tag (latest SemVer)](https://img.shields.io/github/v/tag/NeQuissimus/sort-imports?sort=semver)
 
-`scalafixDependencies += "com.nequissimus" %% "sort-imports" % "<VERSION>"`
+`ThisBuild / scalafixDependencies += "com.nequissimus" %% "sort-imports" % "<VERSION>"`
 
 ## Configuration
 
