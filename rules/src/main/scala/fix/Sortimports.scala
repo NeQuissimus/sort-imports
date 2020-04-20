@@ -9,7 +9,8 @@ import metaconfig.{ generic, ConfDecoder, ConfEncoder, Configured }
 import scalafix.v1._
 
 final case class SortImportsConfig(
-  blocks: List[String] = List(SortImportsConfig.Blocks.Asterisk)
+  blocks: List[String] = List(SortImportsConfig.Blocks.Asterisk),
+  asciiSort: Boolean = true
 )
 
 object SortImportsConfig {
@@ -41,7 +42,8 @@ class SortImports(config: SortImportsConfig) extends SyntacticRule("SortImports"
       .getOrElse("SortImports")(this.config)
       .map(new SortImports(_))
 
-  private val importOrdering: ImportOrdering = new DefaultSort
+  private val importOrdering: ImportOrdering =
+    if (config.asciiSort) new DefaultSort else new WildcardAndGroupFirstSort
 
   override def fix(implicit doc: SyntacticDocument): Patch = {
 
