@@ -7,11 +7,11 @@ rule = SortImports
  "com.sun"
  ]
  */
-import scala.util._ // foobar
+import scala.util._
 import scala.collection._
-import java.util.Map
+import java.util.Map // foo1
 import com.oracle.net._
-import com.sun.awt._
+import com.sun.awt._ // foo2
 import java.math.BigInteger
 
 /**
