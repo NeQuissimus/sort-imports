@@ -97,9 +97,7 @@ class SortImports(config: SortImportsConfig) extends SyntacticRule("SortImports"
             case (block, _) => block == configBlock
           }.fold(acc) {
             case (_, imports) =>
-              val strImports = imports.map { imp =>
-                comments.get(imp).fold(imp.syntax)(comment => s"${imp.syntax} ${comment.syntax}")
-              }.toSeq
+              val strImports = imports.map(imp => comments.get(imp).fold(s"$imp")(comment => s"$imp $comment")).toSeq
 
               acc :+ (strImports.init :+ (strImports.last + '\n'))
           }
