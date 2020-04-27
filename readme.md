@@ -46,6 +46,7 @@ if the blocks from the below _Configuration_ example are used.
 **Important**
 sort-imports does not (currently) take into account shadowing.
 It is a faily dumb sorter of imports. If your code is using shadowing, it may end up no longer compiling!
+If you run into this issue, consider using [liancheng/scalafix-organize-imports](https://github.com/liancheng/scalafix-organize-imports/), which implements a semantic rule.
 
 ## Usage
 
