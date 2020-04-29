@@ -24,20 +24,15 @@ private class ImportGroupTraverser(listBuffer: ListBuffer[ListBuffer[Import]]) e
   }
 }
 
-object ImportGroup {
-
-  val empty: ImportGroup = ImportGroup(Nil)
-}
-
 case class ImportGroup(value: List[Import]) extends Traversable[Import] {
 
   def sortWith(ordering: Ordering[Import]): ImportGroup = ImportGroup(value.sortWith(ordering.lt))
 
-  def groupByBlock(blocks: List[String], defaultBlock: String): Map[String, ImportGroup] =
+  def groupByBlock(blocks: List[Block]): Map[Block, ImportGroup] =
     value.groupBy { imp =>
       blocks
-        .find(block => imp.children.head.syntax.startsWith(block))
-        .getOrElse(defaultBlock)
+        .find(_.matches(imp.children.head.syntax))
+        .getOrElse(Block.Default)
     }.mapValues(ImportGroup(_))
 
   def containPosition(pos: Position): Boolean =

@@ -9,17 +9,13 @@ import metaconfig.{ generic, ConfDecoder, ConfEncoder, Configured }
 import scalafix.v1._
 
 final case class SortImportsConfig(
-  blocks: List[String] = List(SortImportsConfig.Blocks.Asterisk),
-  asciiSort: Boolean = true
+  blocks: List[String],
+  asciiSort: Boolean
 )
 
 object SortImportsConfig {
 
-  object Blocks {
-    val Asterisk: String = "*"
-  }
-
-  val default: SortImportsConfig                       = SortImportsConfig()
+  val default: SortImportsConfig                       = SortImportsConfig(Nil, asciiSort = true)
   implicit val surface: Surface[SortImportsConfig]     = generic.deriveSurface[SortImportsConfig]
   implicit val decoder: ConfDecoder[SortImportsConfig] = generic.deriveDecoder[SortImportsConfig](default)
   implicit val encoder: ConfEncoder[SortImportsConfig] = generic.deriveEncoder[SortImportsConfig]
@@ -73,33 +69,42 @@ class SortImports(config: SortImportsConfig) extends SyntacticRule("SortImports"
         }
     }.map(Patch.removeToken)
 
+    val configBlocks = {
+      val originalBlocks = config.blocks.map {
+        case Block.Default.string => Block.Default
+        case block if block.startsWith(Block.RegexPrefix.Prefix) =>
+          new Block.RegexPrefix(block.substring(Block.RegexPrefix.Prefix.length))
+        case block => new Block.StaticPrefix(block)
+      }
+
+      // If DefaultBlock is not found in the SortImports rule, prepend it
+      if (originalBlocks.contains(Block.Default)) {
+        originalBlocks
+      } else {
+        originalBlocks :+ Block.Default
+      }
+    }
+
+    // Sort config blocks by length desc so groupByBlock give precedence to more specific group
+    val sortedConfigBlocks = configBlocks.sortBy(-_.string.length)
+
     // Sort each group of imports
     val sorted: Seq[Seq[String]] = importGroups.map { importGroup =>
-      val configBlocksByLengthDesc = config.blocks.sortBy(-_.length)
-
-      // Sort all imports then group based on SortImports rule
+      // Group based on SortImports rule
       // In case of import list, the first element in the list is significant
-      val importsGrouped: Map[String, ImportGroup] =
-        importGroup
-          .sortWith(importOrdering)
-          .groupByBlock(configBlocksByLengthDesc, SortImportsConfig.Blocks.Asterisk)
-
-      // If a start is not found in the SortImports rule, add it to the end
-      val configBlocks: List[String] =
-        config.blocks
-          .find(_ == SortImportsConfig.Blocks.Asterisk)
-          .fold(config.blocks :+ SortImportsConfig.Blocks.Asterisk)(_ => config.blocks)
+      val groupedImports: Map[Block, ImportGroup] = importGroup.groupByBlock(sortedConfigBlocks)
 
       // Sort grouped imports and convert to strings
-      val strImportsSorted = configBlocks
+      val strImportsSorted: Seq[String] = configBlocks
         .foldLeft(Seq[Seq[String]]()) { (acc, configBlock) =>
-          importsGrouped.find {
-            case (block, _) => block == configBlock
-          }.fold(acc) {
-            case (_, imports) =>
-              val strImports = imports.map(imp => comments.get(imp).fold(s"$imp")(comment => s"$imp $comment")).toSeq
-
+          groupedImports.get(configBlock) match {
+            case Some(blockImports) =>
+              val strImports = blockImports
+                .sortWith(importOrdering)
+                .map(imp => comments.get(imp).fold(s"$imp")(comment => s"$imp $comment"))
+                .toSeq
               acc :+ (strImports.init :+ (strImports.last + '\n'))
+            case _ => acc
           }
         }
         .flatten
