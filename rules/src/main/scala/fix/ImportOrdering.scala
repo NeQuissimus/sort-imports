@@ -17,15 +17,15 @@ class DefaultSort extends ImportOrdering {
 
 object WildcardAndGroupFirstSort {
 
-  private val wildcardRegex = "_".r
-  private val groupRegex    = "\\{.+\\}".r
+  private val wildcardRegex = "\\._".r
+  private val groupRegex    = "\\.\\{".r
 }
 
 class WildcardAndGroupFirstSort extends ImportOrdering {
 
   private def transformForSorting(imp: Import): (String, String) = {
     val strImp = strFirstImport(imp)
-    (strImp, groupRegex.replaceAllIn(wildcardRegex.replaceAllIn(strImp, "\0"), "\1"))
+    (strImp, groupRegex.replaceAllIn(wildcardRegex.replaceAllIn(strImp, ".\0"), ".\1"))
   }
 
   override def compare(x: Import, y: Import): Int =
