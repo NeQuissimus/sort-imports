@@ -59,7 +59,7 @@ Latest version: ![GitHub tag (latest SemVer)](https://img.shields.io/github/v/ta
 ```
 rule = SortImports
 SortImports.blocks = [
-  "java.",
+  "re:javax?\\.", // a re: prefix denotes a regex, this will group java. and javax. packages together
   "scala.",
   "*",
   "com.sun."
