@@ -16,12 +16,13 @@ object ImportGroupTraverser {
 }
 
 private class ImportGroupTraverser(listBuffer: ListBuffer[ListBuffer[Import]]) extends Traverser {
-  override def apply(tree: Tree): Unit = tree match {
-    case x: Import => listBuffer.last.append(x)
-    case node =>
-      listBuffer.append(ListBuffer.empty)
-      super.apply(node)
-  }
+  override def apply(tree: Tree): Unit =
+    tree match {
+      case x: Import => listBuffer.last.append(x)
+      case node =>
+        listBuffer.append(ListBuffer.empty)
+        super.apply(node)
+    }
 }
 
 case class ImportGroup(value: List[Import]) extends Traversable[Import] {
