@@ -14,10 +14,12 @@ inThisBuild(
       )
     ),
     scalaVersion := V.scala212,
+    crossScalaVersions := List(V.scala211, V.scala212, V.scala213),
     addCompilerPlugin(scalafixSemanticdb),
     scalacOptions ++= List(
       "-Yrangepos",
-      "-P:semanticdb:synthetics:on"
+      "-P:semanticdb:synthetics:on",
+      "-deprecation"
     )
   )
 )
