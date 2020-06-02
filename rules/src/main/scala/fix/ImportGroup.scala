@@ -25,7 +25,7 @@ private class ImportGroupTraverser(listBuffer: ListBuffer[ListBuffer[Import]]) e
     }
 }
 
-case class ImportGroup(value: List[Import]) extends Traversable[Import] {
+case class ImportGroup(value: List[Import]) extends Iterable[Import] {
 
   def sortWith(ordering: Ordering[Import]): ImportGroup = ImportGroup(value.sortWith(ordering.lt))
 
@@ -34,7 +34,7 @@ case class ImportGroup(value: List[Import]) extends Traversable[Import] {
       blocks
         .find(_.matches(imp.children.head.syntax))
         .getOrElse(Block.Default)
-    }.mapValues(ImportGroup(_))
+    }.mapValues(ImportGroup(_)).toMap
 
   def containPosition(pos: Position): Boolean =
     pos.start > value.head.pos.start && pos.end < value.last.pos.end
@@ -47,7 +47,9 @@ case class ImportGroup(value: List[Import]) extends Traversable[Import] {
       }
       .toMap
 
-  override def nonEmpty: Boolean = value.nonEmpty
+  override def isEmpty: Boolean = value.isEmpty
 
   override def foreach[U](f: Import => U): Unit = value.foreach(f)
+
+  override def iterator: Iterator[scala.meta.Import] = value.iterator
 }
