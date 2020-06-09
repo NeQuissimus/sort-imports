@@ -4,7 +4,7 @@ import scala.collection.mutable.ListBuffer
 import scala.meta.contrib.AssociatedComments
 import scala.meta.inputs.Position
 import scala.meta.tokens.Token
-import scala.meta.{ Import, Traverser, Tree }
+import scala.meta.{ Import, Tokens, Traverser, Tree }
 
 object ImportGroupTraverser {
   def retrieveImportGroups(tree: Tree): List[ImportGroup] = {
@@ -39,6 +39,9 @@ case class ImportGroup(value: List[Import]) extends Iterable[Import] {
   def containPosition(pos: Position): Boolean =
     pos.start > value.head.pos.start && pos.end < value.last.pos.end
 
+  def trailedBy(pos: Position): Boolean =
+    pos.start == value.last.pos.end
+
   def trailingComment(comments: AssociatedComments): Map[Import, Token.Comment] =
     value
       .map(currentImport => currentImport -> comments.trailing(currentImport).headOption)
@@ -46,6 +49,9 @@ case class ImportGroup(value: List[Import]) extends Iterable[Import] {
         case (imp, comment) if comment.nonEmpty => (imp, comment.get)
       }
       .toMap
+
+  def trailingSemicolon(tokens: Tokens): Set[Import] =
+    value.filter(imp => tokens.collect { case t: Token.Semicolon => imp.pos.end + 1 == t.start }.nonEmpty).toSet
 
   override def isEmpty: Boolean = value.isEmpty
 
