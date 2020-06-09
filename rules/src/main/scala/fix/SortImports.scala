@@ -60,6 +60,13 @@ class SortImports(config: SortImportsConfig) extends SyntacticRule("SortImports"
       }
     }.map(Patch.removeToken)
 
+    val removeSemicolonsPatch: List[Patch] = importGroups.flatMap { importGroup =>
+      doc.tokens.collect {
+        case token: Token.Semicolon if importGroup.containPosition(token.pos) || importGroup.trailedBy(token.pos) =>
+          token
+      }
+    }.map(Patch.removeToken)
+
     // Remove comments and whitespace between imports and comments
     val removeCommentsPatch: Iterable[Patch] = comments.values.map(Patch.removeToken)
     val removeCommentSpacesPatch: Iterable[Patch] = comments.flatMap {
@@ -99,9 +106,13 @@ class SortImports(config: SortImportsConfig) extends SyntacticRule("SortImports"
         .foldLeft(Seq[Seq[String]]()) { (acc, configBlock) =>
           groupedImports.get(configBlock) match {
             case Some(blockImports) =>
+              val semiColons = blockImports.trailingSemicolon(doc.tokens)
               val strImports = blockImports
                 .sortWith(importOrdering)
-                .map(imp => comments.get(imp).fold(s"$imp")(comment => s"$imp $comment"))
+                .map { imp =>
+                  val semi = if (semiColons.contains(imp)) ";" else ""
+                  comments.get(imp).fold(s"$imp$semi")(comment => s"$imp$semi $comment")
+                }
                 .toSeq
               acc :+ (strImports.init :+ (strImports.last + '\n'))
             case _ => acc
@@ -128,6 +139,12 @@ class SortImports(config: SortImportsConfig) extends SyntacticRule("SortImports"
           .replaceTree(importSwaps.last.from, importSwaps.last.to)
       )
 
-    List(patches, removeLinesPatch, removeCommentsPatch, removeCommentSpacesPatch).flatten.asPatch
+    List(
+      patches,
+      removeLinesPatch,
+      removeSemicolonsPatch,
+      removeCommentsPatch,
+      removeCommentSpacesPatch
+    ).flatten.asPatch
   }
 }
