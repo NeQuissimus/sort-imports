@@ -1,7 +1,7 @@
 package fix
 
 import scala.collection.mutable.ListBuffer
-import scala.meta.contrib.AssociatedComments
+import scala.meta.contrib.{ AComments, AssociatedComments }
 import scala.meta.inputs.Position
 import scala.meta.tokens.Token
 import scala.meta.{ Import, Tokens, Traverser, Tree }
@@ -42,23 +42,30 @@ case class ImportGroup(value: List[Import]) extends Iterable[Import] {
   def trailedBy(pos: Position): Boolean =
     pos.start == value.last.pos.end
 
-  def trailingComment(comments: AssociatedComments): Map[Import, Token.Comment] =
-    value
-      .map(currentImport => currentImport -> comments.trailing(currentImport).headOption)
-      .collect {
-        case (imp, comment) if comment.nonEmpty => (imp, comment.get)
-      }
-      .toMap
+  def trailingComment(tokens: Tokens, comments: AssociatedComments): Map[Import, Token.Comment] = {
+    val trailingMap = AComments.trailingMap(comments)
+
+    value.flatMap { currentImport =>
+      val sc                                  = ImportGroup.semicolons(tokens, currentImport)
+      val cs: IndexedSeq[List[Token.Comment]] = sc.flatMap(s => trailingMap.get(s))
+
+      (currentImport -> comments.trailing(currentImport).headOption) +: cs.map(c => currentImport -> c.headOption)
+    }.collect {
+      case (imp, Some(comment)) => (imp, comment)
+    }.toMap
+  }
 
   def trailingSemicolon(tokens: Tokens): Set[Import] =
-    value.filter { imp =>
-      val semicolons = tokens.collect { case t: Token.Semicolon if imp.pos.end == t.start => t }
-      semicolons.nonEmpty
-  }.toSet
+    value.filter(imp => ImportGroup.semicolons(tokens, imp).nonEmpty).toSet
 
   override def isEmpty: Boolean = value.isEmpty
 
   override def foreach[U](f: Import => U): Unit = value.foreach(f)
 
   override def iterator: Iterator[scala.meta.Import] = value.iterator
+}
+
+object ImportGroup {
+  def semicolons(tokens: Tokens, imp: Import) =
+    tokens.collect { case t: Token.Semicolon if imp.pos.end == t.start => t }
 }

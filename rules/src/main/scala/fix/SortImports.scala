@@ -51,7 +51,7 @@ class SortImports(config: SortImportsConfig) extends SyntacticRule("SortImports"
     val importGroups: List[ImportGroup] = importGroupsWithEmptyLines.filter(_.nonEmpty)
 
     // Trailing comments
-    val comments: Map[Import, Comment] = ImportGroup(importGroups.flatten).trailingComment(doc.comments)
+    val comments: Map[Import, Comment] = ImportGroup(importGroups.flatten).trailingComment(doc.tokens, doc.comments)
 
     // Remove all newlines within import groups
     val removeLinesPatch: List[Patch] = importGroups.flatMap { importGroup =>
