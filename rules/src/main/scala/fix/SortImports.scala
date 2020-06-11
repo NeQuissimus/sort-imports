@@ -107,7 +107,6 @@ class SortImports(config: SortImportsConfig) extends SyntacticRule("SortImports"
           groupedImports.get(configBlock) match {
             case Some(blockImports) =>
               val semiColons = blockImports.trailingSemicolon(doc.tokens)
-                println(semiColons)
               val strImports = blockImports
                 .sortWith(importOrdering)
                 .map { imp =>
