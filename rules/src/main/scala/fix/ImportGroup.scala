@@ -51,7 +51,10 @@ case class ImportGroup(value: List[Import]) extends Iterable[Import] {
       .toMap
 
   def trailingSemicolon(tokens: Tokens): Set[Import] =
-    value.filter(imp => tokens.collect { case t: Token.Semicolon => imp.pos.end + 1 == t.start }.nonEmpty).toSet
+    value.filter { imp =>
+      val semicolons = tokens.collect { case t: Token.Semicolon if imp.pos.end == t.start => t }
+      semicolons.nonEmpty
+  }.toSet
 
   override def isEmpty: Boolean = value.isEmpty
 
