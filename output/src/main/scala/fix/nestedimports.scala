@@ -3,7 +3,7 @@ import java.util.Map
 import scala.collection._
 import scala.util._
 
-import com.oracle.net._
+import org.xml._
 
 object NestedImports {
   import java.math.BigInteger
