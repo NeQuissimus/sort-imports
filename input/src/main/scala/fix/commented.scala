@@ -10,7 +10,7 @@ rule = SortImports
 import scala.util._
 import scala.collection._
 import java.util.Map // foo1
-import com.oracle.net._
+import org.xml._
 import com.sun.awt._ // foo2
 import java.math.BigInteger
 

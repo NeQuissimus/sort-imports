@@ -23,7 +23,7 @@ For example, these imports
 import scala.util._
 import scala.collection._
 import java.util.Map
-import com.oracle.net._
+import org.xml._
 import com.sun._
 ```
 
@@ -35,7 +35,7 @@ import java.util.Map
 import scala.collection._
 import scala.util._
 
-import com.oracle.net._
+import org.xml._
 
 import com.sun._
 ```

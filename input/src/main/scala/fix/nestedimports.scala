@@ -10,7 +10,7 @@ rule = SortImports
 import scala.util._
 import scala.collection._
 import java.util.Map
-import com.oracle.net._
+import org.xml._
 
 object NestedImports {
   import java.math.BigInteger
