@@ -50,8 +50,8 @@ case class ImportGroup(value: List[Import]) extends Iterable[Import] {
       val cs: IndexedSeq[List[Token.Comment]] = sc.flatMap(s => trailingMap.get(s))
 
       (currentImport -> comments.trailing(currentImport).headOption) +: cs.map(c => currentImport -> c.headOption)
-    }.collect {
-      case (imp, Some(comment)) => (imp, comment)
+    }.collect { case (imp, Some(comment)) =>
+      (imp, comment)
     }.toMap
   }
 

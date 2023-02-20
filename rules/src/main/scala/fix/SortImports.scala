@@ -69,11 +69,10 @@ class SortImports(config: SortImportsConfig) extends SyntacticRule("SortImports"
 
     // Remove comments and whitespace between imports and comments
     val removeCommentsPatch: Iterable[Patch] = comments.values.map(Patch.removeToken)
-    val removeCommentSpacesPatch: Iterable[Patch] = comments.flatMap {
-      case (imp, comment) =>
-        (0 to comment.pos.start - imp.pos.end).map { diff =>
-          new Token.Space(Input.None, comment.dialect, imp.pos.end + diff)
-        }
+    val removeCommentSpacesPatch: Iterable[Patch] = comments.flatMap { case (imp, comment) =>
+      (0 to comment.pos.start - imp.pos.end).map { diff =>
+        new Token.Space(Input.None, comment.dialect, imp.pos.end + diff)
+      }
     }.map(Patch.removeToken)
 
     val configBlocks = {
@@ -127,8 +126,8 @@ class SortImports(config: SortImportsConfig) extends SyntacticRule("SortImports"
     val combined: List[List[Swap]] =
       importGroups
         .zip(sorted)
-        .map {
-          case (importGroup, strImportGroupSorted) => importGroup.value.zip(strImportGroupSorted).map(new Swap(_))
+        .map { case (importGroup, strImportGroupSorted) =>
+          importGroup.value.zip(strImportGroupSorted).map(new Swap(_))
         }
 
     // Create patches using sorted - unsorted pairs
