@@ -15,7 +15,7 @@ import com.sun.awt._ // foo2
 import java.math.BigInteger
 
 /**
- *  Bla
+ * Bla
  */
 object Bla {
   val foo = "Hello" // World

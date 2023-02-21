@@ -9,7 +9,7 @@ import org.xml._
 import com.sun.awt._ // foo2
 
 /**
- *  Bla
+ * Bla
  */
 object Bla {
   val foo = "Hello" // World
